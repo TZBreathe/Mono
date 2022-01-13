@@ -1,13 +1,17 @@
 %% Load experiment and OCV lookup 
 
 clear;
-load brOCV;
-load CC_25;
+load CC_25.mat;
+BrOcv = gdParam.OCV_Fill_Sparse_OCV("J:\01_Cell_Database\Cells\Samsung\48X\OCV\HysteresisFull\Rev_1\48X_HysteresisFull_1001z_7T.mat");
+s48xFolder = 'J:\01_Cell_Database\Cells\Samsung\48X\ECN\2RC\Rev_1\';
+BrEcnName = '48X_2RC_21z_7T_5I_14.mat';
+BrEcn = gdParam.ECN_Fill_Sparse_ECN([s48xFolder BrEcnName]);
+BrOcv.capCell=4.746;
 
 
-k0=[0.01195; 0.015; 60/0.015; 1200;  1.0; 9000; 9000; 9000]; %R0, R1,  C1, tauD, kd, Ea1, Ea2, Ea3
-lowBound = [k0(1)/2;  k0(2)/5;  k0(3)/5;  800;   k0(5)*0.7;  5000;  5000;  5000];
-upBound =  [k0(1)*2;  k0(2)*3;  k0(3)*3;  2500;  k0(5)*2;  13000; 13000; 13000];
+k0=[400;  1.0; 6000]; % tauD, kd, Ea
+lowBound = [  200;   k0(2)*0.7;  3000];
+upBound =  [  1000;  k0(2)*2;   13000];
 
 iniPopSpread=2;
 initGaPopSize = 50;
@@ -27,8 +31,6 @@ hybridopts = optimoptions('fmincon','Display','none','MaxIterations',maxHybridFm
 genAlgOpts = optimoptions('ga','Display','iter','InitialPopulationMatrix',...
 				initGaPop','UseParallel', true,'MaxTime',maxOptTime,'MaxGenerations',1000.*length(k0),...
 				'HybridFcn',{@fmincon,hybridopts});
- ocvData=BrOcv;
-
 
 %% 3C
 currData=currentSeries{5}(1:700);
@@ -37,9 +39,9 @@ voltageData=voltageSeries{5}(1:700);
 tempData=tempSeries{5}(1:700);
 timeData=1:length(currData)';
 
-genAlgOpts.MaxTime = 60*2;
-maxOptTime = 60*2;
-globObj = @(k)Diffusion_Param_Optim_Function(k,currData,timeData,socData,voltageData,tempData,ocvData);
+genAlgOpts.MaxTime = 60*3;
+maxOptTime = 60*3;
+globObj = @(k)ECN_Diffusion_Param_Optim_Function(k,currData,timeData,socData,voltageData,tempData,BrOcv,BrEcn);
 [xOptTmp,fOpt(1,1),~,~] = ga(globObj,length(k0),[],[],[],[],lowBound,upBound,[],genAlgOpts);
 
 xOptTmp3C=xOptTmp;
@@ -55,9 +57,9 @@ timeData=1:length(currData)';
 
 
 k0=xOptTmp;
- lowBound(6:8)= k0(6:8);
- upBound (6:8)= k0(6:8);
-globObj = @(k)Diffusion_Param_Optim_Function(k,currData,timeData,socData,voltageData,tempData,ocvData);
+ lowBound(3)= k0(3);
+ upBound (3)= k0(3);
+globObj = @(k)ECN_Diffusion_Param_Optim_Function(k,currData,timeData,socData,voltageData,tempData,BrOcv,BrEcn);
 [xOptTmp,fOpt(1,1),~,~] = ga(globObj,length(k0),[],[],[],[],lowBound,upBound,[],genAlgOpts);
 
 LUT25(:,6)=xOptTmp;
@@ -73,12 +75,9 @@ tempData=tempSeries{7};
 timeData=1:length(currData)';
 
 k0=xOptTmp;
-
-%  lowBound = [k0(1)*0.8;  k0(2)*0.7;    k0(3)*0.7;   k0(4)*0.7;  k0(5)*0.8;  k0(6); k0(7); k0(8)];
-%  upBound = [k0(1)*1.2;   k0(2)*1.4;    k0(3)*1.4;   k0(4)*1.4;  k0(5)*1.2; k0(6); k0(7); k0(8)];
-genAlgOpts.MaxTime = 60*2;
-maxOptTime = 60*2;
-globObj = @(k)Diffusion_Param_Optim_Function(k,currData,timeData,socData,voltageData,tempData,ocvData);
+lowBound =[k0(1)*0.8;  k0(2)*0.7;    k0(3)];
+upBound = [k0(1)*1.2;   k0(2)*1.4;    k0(3)];
+globObj = @(k)ECN_Diffusion_Param_Optim_Function(k,currData,timeData,socData,voltageData,tempData,BrOcv,BrEcn);
 [xOptTmp,fOpt(1,1),~,~] = ga(globObj,length(k0),[],[],[],[],lowBound,upBound,[],genAlgOpts);
 
 LUT25(:,7)=xOptTmp;
@@ -94,47 +93,46 @@ timeData=1:length(currData)';
 % maxOptTime = 60*5;
 
 k0=xOptTmp3C;
-
-%  lowBound = [k0(1)*0.8;  k0(2)*0.7;    k0(3)*0.7;   k0(4)*0.7;  k0(5)*0.8;  k0(6); k0(7); k0(8)];
-%  upBound = [k0(1)*1.2;   k0(2)*1.4;    k0(3)*1.4;   k0(4)*1.4;  k0(5)*1.2;  k0(6); k0(7); k0(8)];
-globObj = @(k)Diffusion_Param_Optim_Function(k,currData,timeData,socData,voltageData,tempData,ocvData);
+lowBound =[k0(1)*0.8;  k0(2)*0.7;    k0(3)];
+upBound = [k0(1)*1.2;   k0(2)*1.4;    k0(3)];
+globObj = @(k)ECN_Diffusion_Param_Optim_Function(k,currData,timeData,socData,voltageData,tempData,BrOcv,BrEcn);
 [xOptTmp,fOpt(1,1),~,~] = ga(globObj,length(k0),[],[],[],[],lowBound,upBound,[],genAlgOpts);
 
 LUT25(:,4)=xOptTmp;
 save param_2C.mat xOptTmp
 %% 1C
 
-currData=currentSeries{3}(700:2840);
-socData=socRefSeries{3}(700:2840);
-voltageData=voltageSeries{3}(700:2840);
-tempData=tempSeries{3}(700:2840);
+currData=currentSeries{3}(1:2840);
+socData=socRefSeries{3}(1:2840);
+voltageData=voltageSeries{3}(1:2840);
+tempData=tempSeries{3}(1:2840);
 timeData=1:length(currData)';
 
-genAlgOpts.MaxTime = 60*3;
-maxOptTime = 60*3;
+% genAlgOpts.MaxTime = 60*3;
+% maxOptTime = 60*3;
 
 k0=xOptTmp;
-
-%  lowBound = [k0(1)*0.8;  k0(2)*0.7;    k0(3)*0.7;   k0(4)*0.7;  k0(5)*0.8;  k0(6); k0(7); k0(8)];
-%  upBound = [k0(1)*1.2;   k0(2)*1.4;    k0(3)*1.4;   k0(4)*1.4;  k0(5)*1.2;  k0(6); k0(7); k0(8)];
-globObj = @(k)Diffusion_Param_Optim_Function(k,currData,timeData,socData,voltageData,tempData,ocvData);
+lowBound =[k0(1)*0.8;  k0(2)*0.7;    k0(3)];
+upBound = [k0(1)*1.2;   k0(2)*1.4;    k0(3)];
+globObj = @(k)ECN_Diffusion_Param_Optim_Function(k,currData,timeData,socData,voltageData,tempData,BrOcv,BrEcn);
 [xOptTmp,fOpt(1,1),~,~] = ga(globObj,length(k0),[],[],[],[],lowBound,upBound,[],genAlgOpts);
 
 LUT25(:,3)=xOptTmp;
 save param_1C.mat xOptTmp
 
 %% 0.5C
-currData=currentSeries{2}(3000:6500);
-socData=socRefSeries{2}(3000:6500);
-voltageData=voltageSeries{2}(3000:6500);
-tempData=tempSeries{2}(3000:6500);
+currData=currentSeries{2}(2000:6500);
+socData=socRefSeries{2}(2000:6500);
+voltageData=voltageSeries{2}(2000:6500);
+tempData=tempSeries{2}(2000:6500);
 timeData=1:length(currData)';
 
 % genAlgOpts.MaxTime = 60*10;
 % maxOptTime = 60*10;
 k0=xOptTmp;
-
-globObj = @(k)Diffusion_Param_Optim_Function(k,currData,timeData,socData,voltageData,tempData,ocvData);
+lowBound =[k0(1)*0.8;  k0(2)*0.7;    k0(3)];
+upBound = [k0(1)*1.2;   k0(2)*1.4;    k0(3)];
+globObj = @(k)ECN_Diffusion_Param_Optim_Function(k,currData,timeData,socData,voltageData,tempData,BrOcv,BrEcn);
 [xOptTmp,fOpt(1,1),~,~] = ga(globObj,length(k0),[],[],[],[],lowBound,upBound,[],genAlgOpts);
 
 LUT25(:,2)=xOptTmp;
@@ -142,19 +140,20 @@ save param_05C.mat xOptTmp
 %% 0.1 C
 
 
-voltageData=voltageSeries{1}(23000:end);
-currData=(currentSeries{1}(23000:end));
-socData=socRefSeries{1}(23000:end);
-tempData=tempSeries{1}(2300:end);
+voltageData=voltageSeries{1}(20000:end);
+currData=(currentSeries{1}(20000:end));
+socData=socRefSeries{1}(20000:end);
+tempData=tempSeries{1}(2000:end);
 timeData=1:length(currData)';
 
 
 genAlgOpts.MaxTime = 60*10;
 maxOptTime = 60*10;
 k0=xOptTmp;
-
+lowBound =[k0(1)*0.8;  k0(2)*0.7;    k0(3)];
+upBound = [k0(1)*1.2;   k0(2)*1.4;    k0(3)];
  
- globObj = @(k)Diffusion_Param_Optim_Function(k,currData,timeData,socData,voltageData,tempData,ocvData);
+globObj = @(k)ECN_Diffusion_Param_Optim_Function(k,currData,timeData,socData,voltageData,tempData,BrOcv,BrEcn);
 [xOptTmp,fOpt(1,1),~,~] = ga(globObj,length(k0),[],[],[],[],lowBound,upBound,[],genAlgOpts);
 
 LUT25(:,1)=xOptTmp;
@@ -164,7 +163,7 @@ save param_01C.mat xOptTmp
 %% Run and plot
 params=xOptTmp;
 
-[Vsim,Vdiff]=diffusion_model_run(params,currData,timeData,socData,tempData,ocvData);
+[Vsim]=ECN_diffusion_model(params,currData,timeData,socData,tempData,BrOcv,BrEcn);
 
 figure();
 hold on;
@@ -199,18 +198,22 @@ LUT25(:,6)=xOptTmp;
 load param_5C.mat
 LUT25(:,7)=xOptTmp;
 
-save LUT25_old_2.mat LUT25;
+save LUT25.mat LUT25;
 
 
 
  %% Test run
 % % 
 clear;
-N=8;
-load LUT25_old_2.mat
+load CC_25.mat;
+BrOcv = gdParam.OCV_Fill_Sparse_OCV("J:\01_Cell_Database\Cells\Samsung\48X\OCV\HysteresisFull\Rev_1\48X_HysteresisFull_1001z_7T.mat");
+s48xFolder = 'J:\01_Cell_Database\Cells\Samsung\48X\ECN\2RC\Rev_1\';
+BrEcnName = '48X_2RC_21z_7T_5I_14.mat';
+BrEcn = gdParam.ECN_Fill_Sparse_ECN([s48xFolder BrEcnName]);
+load LUT25.mat
 load lincc_25.mat;
-load brOCV;
- ocvData=BrOcv;
+
+N=8;
 
 params=LUT25;
 currData_t=lincc_25{N}(4:1100,1);
@@ -219,7 +222,7 @@ voltageData_t=lincc_25{N}(4:1100,2);
 tempData_t=lincc_25{N}(4:1100,4);
 timeData=4:length(currData_t)+3;
 % 
-Vsim=diffusion_model_run_lut(params,currData_t,timeData,socData_t,tempData_t,ocvData);
+Vsim=ECN_diffusion_model_lut(params,currData_t,timeData,socData_t,tempData_t,BrOcv,BrEcn);
 error_val=mean(abs(Vsim-voltageData_t))
 % 
 % 

@@ -18,7 +18,7 @@
  % Provided under licence to Rimac Automobili d.o.o.
  
 
-function [obj, voltModel] = Diffusion2P_Param_Optim_Function(k,currData,timeData,socData,voltData,tempData,OcvLuts,dt)
+function [obj, voltModel] = ECN_Diffusion_Param_Optim_Function(k,currData,timeData,socData,voltData,tempData,OcvLuts,ECNParams)
 % This allows the user to choose which degrees of freedom to use (dependence on soc)
 % k is the optimisation variable
 
@@ -27,7 +27,7 @@ function [obj, voltModel] = Diffusion2P_Param_Optim_Function(k,currData,timeData
 
 
 % Calculate the voltage resopnse
-voltModel = diffusion2P_model(k,currData,timeData,socData,tempData,OcvLuts,dt);
+voltModel = ECN_diffusion_model(k,currData,timeData,socData,tempData,OcvLuts,ECNParams);
 
 obj = 1e3.*sum(sum((voltModel - voltData).^2))./length(timeData); 
 % Factor of 1e6 results in higher numbers, which means the optimisation does not stop prematurely
