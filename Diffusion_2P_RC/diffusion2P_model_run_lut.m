@@ -1,26 +1,17 @@
 %% A simple diffusion+ECN model
 
-function [voltOut]=diffusion2P_model(k,currData,timeData,socData,tempData,OcvLuts,dt)
+function [voltOut]=diffusion2P_model_run_lut(k,currData,timeData,socData,tempData,OcvLuts)
 %params
 
 N=1; % controls timestep
+dt=1;
 Tref=273+25;
-
+C_lut=[0.1; 0.5; 1; 2; 3; 4; 5].*4.8;
+%C_lut=[12.5; 15; 20];
 SoC0=socData(1);
 %v_Out=ones(length(timeData),1)';
 %voltOut=ones(length(timeData),1);
 Vrc=0;
-
-
-R_0=k(1);
-R_1 = k(2);
-C_1=k(3);
-tauP_0=k(4);
-tauN_0=k(5);
-kd=k(6);
-Ea1=k(7);
-Ea2=k(8);
-
 
 % diffusion settings
 Q=4.7455*3600; %capacity, should be an argument but lazy for the moment
@@ -31,14 +22,11 @@ Sa = 4*pi*(R*(1:Nr)/Nr).^2; % outer surface area of each shell
 dV = (4/3)*pi*((R*(1:Nr)/Nr).^3-(R*(0:Nr-1)/Nr).^3); % vol. of ea. shell
 SoCN = SoC0*ones(1,(Nr)); % 'concentration' profile versus "r" dimension for neg electrode
 SoCP=(1-SoC0)*ones(1,Nr);
-SoCavg=SoC0*ones(size(timeData));
+% SoCavg=SoC0*ones(size(timeData));
 SoCNs = SoC0;
 SoCPs = 1-SoC0;
 
 h(1)=-1;
-if length(timeData)>2000
-    h(1)=1;
-end
 k_hyst=10;
 hyst=OcvLuts{1}.Components.hystAmp(:,5); %Hyst data parameters, fifth column for 25 deg.
 hyst_0=OcvLuts{1}.Components.hystInst(:,5);
@@ -55,7 +43,19 @@ curr_Data=currData;
 
 % calc diffusion 
 for timestep = 1:times
+     
+  R_0=interp1(C_lut,k(1,:),curr_Data(timestep),'linear','extrap');
+  R_1 = interp1(C_lut,k(2,:),curr_Data(timestep),'linear','extrap');
+  C_1=interp1(C_lut,k(3,:),curr_Data(timestep),'linear','extrap');
+  tauP_0=interp1(C_lut,k(4,:),curr_Data(timestep),'linear','extrap');
+  tauN_0=interp1(C_lut,k(5,:),curr_Data(timestep),'linear','extrap');
+  kd=interp1(C_lut,k(6,:),curr_Data(timestep),'linear','extrap');
+  Ea1=k(7,1);
+  Ea2=k(8,1);
   
+    
+    
+    
     R0=R_0*exp(-Ea1/8.314*(-1/(273+tempData(timestep))+1/Tref));
     R1=R_1*exp(-Ea1/8.314*(-1/(273+tempData(timestep))+1/Tref));
     tauP=tauP_0*exp(-Ea2/8.314*(-1/(273+tempData(timestep))+1/Tref));
@@ -82,13 +82,13 @@ for timestep = 1:times
     SoCP(end) = SoCP(end) -(curr_Data(timestep)/3/Q)*Sa(end)*dt/dV(end);  % at boundary pos elec
     SoCNs = min(1,SoCN(end)); % surface soc
     SoCPs = min(1,SoCP(end));
-    %SoCavg= socData(timestep);
-    %OCVcell=interpn(OcvLuts{1}.Dims.soc,OcvLuts{1}.Dims.temp,OcvLuts{1}.Components.ocv,SoCavg,tempData(timestep),'makima');% ocv at avearge soc
+    SoCavg= socData(timestep);
+    OCVcell=interpn(OcvLuts{1}.Dims.soc,OcvLuts{1}.Dims.temp,OcvLuts{1}.Components.ocv,SoCavg,tempData(timestep),'makima');% ocv at avearge soc
     OCVP_surf=interpn(OcvLuts{2}.Dims.soc,OcvLuts{2}.Dims.temp,OcvLuts{2}.Components.U_p,1-SoCPs,tempData(timestep),'makima'); %ocv at surface soc
     OCVN_surf=interpn(OcvLuts{2}.Dims.soc,OcvLuts{2}.Dims.temp,OcvLuts{2}.Components.U_n,SoCNs,tempData(timestep),'makima');
-    %Vdiff=-kd*(OCVcell-(OCVP_surf-OCVN_surf));
-    v_Out(timestep)=IR0+Vrc+kd*(OCVP_surf-OCVN_surf)+U_hyst;
-    %v_Out(timestep)=IR0+Vrc+U_hyst+OCVcell+Vdiff;
+    %Vdiff(timestep)=-kd*(OCVcell-(OCVP_surf-OCVN_surf));
+    %v_Out(timestep)=IR0+Vrc+Vdiff(timestep)+OCVcell+U_hyst;
+    v_Out(timestep)=IR0+Vrc+U_hyst+kd*(OCVP_surf-OCVN_surf);
     end
 
     voltOut=v_Out';

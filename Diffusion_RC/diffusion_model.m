@@ -35,7 +35,7 @@ SoCs = zeros(size(timeData)); % concentration at surface
 SoCavg=SoC0*ones(size(timeData));
 SoCs(1) = SoC0;
 
-h(1)=1;
+h(1)=-1;
 % h(1)=1;
 k_hyst=10;
 hyst=OcvLuts.Components.hystAmp(:,5); %Hyst data parameters, fifth column for 25 deg.
