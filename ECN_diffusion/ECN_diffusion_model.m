@@ -10,14 +10,14 @@ Tref=298;
 
 tau_0=k(1);
 kd=k(2);
-% Ea=k(3);
+Ea=k(3);
 
 SoC0=socData(1);
 voltOut=ones(length(timeData),1);
 Vrc1=0;Vrc2=0;
 
 % diffusion settings
-Q=4.7455*3600; %capacity, should be an argument but lazy for the moment
+Q=4.7455*3600; %capacity
 R = 1; % particle radius [m]
 Nr = 10; % number of "shells" radially
 dR = R/Nr; % width of each "shell"
@@ -31,8 +31,6 @@ SoCs(1) = SoC0;
 h(1)=-1;
 % h(1)=1;
 k_hyst=10;
-hyst=OcvLuts.Components.hystAmp(:,5); %Hyst data parameters, fifth column for 25 deg.
-hyst_0=OcvLuts.Components.hystInst(:,5);
 
 %if using finer timestep 'interploate' input current array to larger size
 times=N*length(timeData);
@@ -42,23 +40,29 @@ curr_Data=currData;
 % end
 % curr_Data(1:N)=currData(1);
 
-% calc diffusion 
+
 for timestep = 1:times
 
-    tau=tau_0;
-%     tau=tau_0*exp(-Ea/8.314*(-1/(273+tempData(timestep))+1/Tref));  
-    R0=interpn(ECNParams.Dims.soc, ECNParams.Dims.temp, ECNParams.Dims.crate,ECNParams.Components.R_0,socData(timestep),tempData(timestep),curr_Data(timestep)./4.7,'linear',ECNParams.Components.R_0(ceil(socData(timestep)*100/21),7,5));
-    R1=interpn(ECNParams.Dims.soc, ECNParams.Dims.temp, ECNParams.Dims.crate,ECNParams.Components.R_1,socData(timestep),tempData(timestep),curr_Data(timestep)./4.7,'linear',ECNParams.Components.R_1(ceil(socData(timestep)*100/21),7,5));
-    R2=interpn(ECNParams.Dims.soc, ECNParams.Dims.temp, ECNParams.Dims.crate,ECNParams.Components.R_2,socData(timestep),tempData(timestep),curr_Data(timestep)./4.7,'linear',ECNParams.Components.R_2(ceil(socData(timestep)*100/21),7,5));
-    C1=interpn(ECNParams.Dims.soc, ECNParams.Dims.temp, ECNParams.Dims.crate,ECNParams.Components.C_1,socData(timestep),tempData(timestep),curr_Data(timestep)./4.7,'linear',ECNParams.Components.C_1(ceil(socData(timestep)*100/21),7,5));
-    C2=interpn(ECNParams.Dims.soc, ECNParams.Dims.temp, ECNParams.Dims.crate,ECNParams.Components.C_2,socData(timestep),tempData(timestep),curr_Data(timestep)./4.7,'linear',ECNParams.Components.C_2(ceil(socData(timestep)*100/21),7,5));
+%     tau=tau_0;
+    tau=tau_0*exp(-Ea/8.314*(-1/(273+tempData(timestep))+1/Tref));  
+    R0=interpn(ECNParams.Dims.soc, ECNParams.Dims.temp, ECNParams.Dims.crate,ECNParams.Components.R_0,socData(timestep),tempData(timestep),curr_Data(timestep)./4.7,'linear',ECNParams.Components.R_0(ceil(socData(timestep)*21),6,8));
+    R1=interpn(ECNParams.Dims.soc, ECNParams.Dims.temp, ECNParams.Dims.crate,ECNParams.Components.R_1,socData(timestep),tempData(timestep),curr_Data(timestep)./4.7,'linear',ECNParams.Components.R_1(ceil(socData(timestep)*21),6,8));
+    R2=interpn(ECNParams.Dims.soc, ECNParams.Dims.temp, ECNParams.Dims.crate,ECNParams.Components.R_2,socData(timestep),tempData(timestep),curr_Data(timestep)./4.7,'linear',ECNParams.Components.R_2(ceil(socData(timestep)*21),6,8));
+    C1=interpn(ECNParams.Dims.soc, ECNParams.Dims.temp, ECNParams.Dims.crate,ECNParams.Components.C_1,socData(timestep),tempData(timestep),curr_Data(timestep)./4.7,'linear',ECNParams.Components.C_1(ceil(socData(timestep)*21),6,8));
+    C2=interpn(ECNParams.Dims.soc, ECNParams.Dims.temp, ECNParams.Dims.crate,ECNParams.Components.C_2,socData(timestep),tempData(timestep),curr_Data(timestep)./4.7,'linear',ECNParams.Components.C_2(ceil(socData(timestep)*21),6,8));
+
+%     R0=interpn(ECNParams.Dims.soc, ECNParams.Dims.temp, ECNParams.Dims.crate,ECNParams.Components.R_0,socData(timestep),tempData(timestep),curr_Data(timestep)./4.7,'makima');
+%     R1=interpn(ECNParams.Dims.soc, ECNParams.Dims.temp, ECNParams.Dims.crate,ECNParams.Components.R_1,socData(timestep),tempData(timestep),curr_Data(timestep)./4.7,'makima');
+%     R2=interpn(ECNParams.Dims.soc, ECNParams.Dims.temp, ECNParams.Dims.crate,ECNParams.Components.R_2,socData(timestep),tempData(timestep),curr_Data(timestep)./4.7,'makima');
+%     C1=interpn(ECNParams.Dims.soc, ECNParams.Dims.temp, ECNParams.Dims.crate,ECNParams.Components.C_1,socData(timestep),tempData(timestep),curr_Data(timestep)./4.7,'makima');
+%     C2=interpn(ECNParams.Dims.soc, ECNParams.Dims.temp, ECNParams.Dims.crate,ECNParams.Components.C_2,socData(timestep),tempData(timestep),curr_Data(timestep)./4.7,'makima');
     
     IR0=R0.*curr_Data(timestep); 
     Vrc1=R1*(exp(-dt/R1/C1).*(Vrc1/R1)+(1-exp(-dt/R1/C1)).*curr_Data(timestep));
     Vrc2=R2*(exp(-dt/R2/C2).*(Vrc2/R2)+(1-exp(-dt/R2/C2)).*curr_Data(timestep));
 
-    M_hyst=interp1(OcvLuts.Dims.soc,hyst,socData(timestep));
-    M0=interp1(OcvLuts.Dims.soc,hyst_0,socData(timestep));
+    M_hyst=interpn(OcvLuts.Dims.soc, OcvLuts.Dims.temp,OcvLuts.Components.hystAmp,socData(timestep),tempData(timestep),'makima'); 
+    M0=interpn(OcvLuts.Dims.soc, OcvLuts.Dims.temp,OcvLuts.Components.hystInst,socData(timestep),tempData(timestep),'makima');
     h=exp(-dt*abs(curr_Data(timestep))*k_hyst/(Q))*h+sign(curr_Data(timestep))*(1-exp(-dt*abs(curr_Data(timestep)*k_hyst/(Q))));
     U_hyst=M_hyst.*h+sign(curr_Data(timestep)).*M0;
 
@@ -72,8 +76,8 @@ for timestep = 1:times
     %OCVcell=interpn(OcvLuts.Dims.soc,OcvLuts.Dims.temp,OcvLuts.Components.ocv,SoCavg(timestep),tempData(timestep),'makima');
     OCVcell_surf=interpn(OcvLuts.Dims.soc,OcvLuts.Dims.temp,OcvLuts.Components.ocv,SoCs,tempData(timestep),'linear',OcvLuts.Components.ocv(max(ceil(SoCs*1000),7),1)); %ocv at surface soc
     Vdiff=-kd*(OCVcell-OCVcell_surf);
-     v_Out(timestep)=IR0+Vrc1+Vrc2+Vdiff+OCVcell+U_hyst;
-    % v_Out(timestep)=IR0+Vrc1+Vrc2+OCVcell+U_hyst;
+    v_Out(timestep)=IR0+Vrc1+Vrc2+Vdiff+OCVcell+U_hyst;
+     %v_Out(timestep)=IR0+Vrc1+Vrc2+OCVcell+U_hyst;
 
 end
 
