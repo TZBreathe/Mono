@@ -4,7 +4,7 @@ clear;
 load CC_25.mat;
 BrOcv = gdParam.OCV_Fill_Sparse_OCV("J:\01_Cell_Database\Cells\Samsung\48X\OCV\HysteresisFull\Rev_1\48X_HysteresisFull_1001z_7T.mat");
 s48xFolder = 'J:\01_Cell_Database\Cells\Samsung\48X\ECN\2RC\Rev_1\';
-BrEcnName = '48X_2RC_21z_7T_5I_14.mat';
+BrEcnName = '48X_2RC_21z_7T_5I.mat';
 BrEcn = gdParam.ECN_Fill_Sparse_ECN([s48xFolder BrEcnName]);
 BrOcv.capCell=4.746;
 

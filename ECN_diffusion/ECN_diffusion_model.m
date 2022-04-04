@@ -28,8 +28,8 @@ SoCs = zeros(size(timeData)); % concentration at surface
 SoCavg=SoC0*ones(size(timeData));
 SoCs(1) = SoC0;
 
-h(1)=-1;
-% h(1)=1;
+% h(1)=-1;
+h(1)=0;
 k_hyst=10;
 
 %if using finer timestep 'interploate' input current array to larger size
@@ -45,18 +45,18 @@ for timestep = 1:times
 
 %     tau=tau_0;
     tau=tau_0*exp(-Ea/8.314*(-1/(273+tempData(timestep))+1/Tref));  
-    R0=interpn(ECNParams.Dims.soc, ECNParams.Dims.temp, ECNParams.Dims.crate,ECNParams.Components.R_0,socData(timestep),tempData(timestep),curr_Data(timestep)./4.7,'linear',ECNParams.Components.R_0(ceil(socData(timestep)*21),6,8));
-    R1=interpn(ECNParams.Dims.soc, ECNParams.Dims.temp, ECNParams.Dims.crate,ECNParams.Components.R_1,socData(timestep),tempData(timestep),curr_Data(timestep)./4.7,'linear',ECNParams.Components.R_1(ceil(socData(timestep)*21),6,8));
-    R2=interpn(ECNParams.Dims.soc, ECNParams.Dims.temp, ECNParams.Dims.crate,ECNParams.Components.R_2,socData(timestep),tempData(timestep),curr_Data(timestep)./4.7,'linear',ECNParams.Components.R_2(ceil(socData(timestep)*21),6,8));
-    C1=interpn(ECNParams.Dims.soc, ECNParams.Dims.temp, ECNParams.Dims.crate,ECNParams.Components.C_1,socData(timestep),tempData(timestep),curr_Data(timestep)./4.7,'linear',ECNParams.Components.C_1(ceil(socData(timestep)*21),6,8));
-    C2=interpn(ECNParams.Dims.soc, ECNParams.Dims.temp, ECNParams.Dims.crate,ECNParams.Components.C_2,socData(timestep),tempData(timestep),curr_Data(timestep)./4.7,'linear',ECNParams.Components.C_2(ceil(socData(timestep)*21),6,8));
+%     R0=interpn(ECNParams.Dims.soc, ECNParams.Dims.temp, ECNParams.Dims.crate,ECNParams.Components.R_0,socData(timestep),tempData(timestep),curr_Data(timestep)./4.7,'linear',ECNParams.Components.R_0(ceil(socData(timestep)*21),6,8));
+%     R1=interpn(ECNParams.Dims.soc, ECNParams.Dims.temp, ECNParams.Dims.crate,ECNParams.Components.R_1,socData(timestep),tempData(timestep),curr_Data(timestep)./4.7,'linear',ECNParams.Components.R_1(ceil(socData(timestep)*21),6,8));
+%     R2=interpn(ECNParams.Dims.soc, ECNParams.Dims.temp, ECNParams.Dims.crate,ECNParams.Components.R_2,socData(timestep),tempData(timestep),curr_Data(timestep)./4.7,'linear',ECNParams.Components.R_2(ceil(socData(timestep)*21),6,8));
+%     C1=interpn(ECNParams.Dims.soc, ECNParams.Dims.temp, ECNParams.Dims.crate,ECNParams.Components.C_1,socData(timestep),tempData(timestep),curr_Data(timestep)./4.7,'linear',ECNParams.Components.C_1(ceil(socData(timestep)*21),6,8));
+%     C2=interpn(ECNParams.Dims.soc, ECNParams.Dims.temp, ECNParams.Dims.crate,ECNParams.Components.C_2,socData(timestep),tempData(timestep),curr_Data(timestep)./4.7,'linear',ECNParams.Components.C_2(ceil(socData(timestep)*21),6,8));
 
-%     R0=interpn(ECNParams.Dims.soc, ECNParams.Dims.temp, ECNParams.Dims.crate,ECNParams.Components.R_0,socData(timestep),tempData(timestep),curr_Data(timestep)./4.7,'makima');
-%     R1=interpn(ECNParams.Dims.soc, ECNParams.Dims.temp, ECNParams.Dims.crate,ECNParams.Components.R_1,socData(timestep),tempData(timestep),curr_Data(timestep)./4.7,'makima');
-%     R2=interpn(ECNParams.Dims.soc, ECNParams.Dims.temp, ECNParams.Dims.crate,ECNParams.Components.R_2,socData(timestep),tempData(timestep),curr_Data(timestep)./4.7,'makima');
-%     C1=interpn(ECNParams.Dims.soc, ECNParams.Dims.temp, ECNParams.Dims.crate,ECNParams.Components.C_1,socData(timestep),tempData(timestep),curr_Data(timestep)./4.7,'makima');
-%     C2=interpn(ECNParams.Dims.soc, ECNParams.Dims.temp, ECNParams.Dims.crate,ECNParams.Components.C_2,socData(timestep),tempData(timestep),curr_Data(timestep)./4.7,'makima');
-    
+    R0=interpn(ECNParams.Dims.soc, ECNParams.Dims.temp, ECNParams.Dims.crate,ECNParams.Components.R_0,socData(timestep),tempData(timestep),curr_Data(timestep)./4.7,'makima');
+    R1=interpn(ECNParams.Dims.soc, ECNParams.Dims.temp, ECNParams.Dims.crate,ECNParams.Components.R_1,socData(timestep),tempData(timestep),curr_Data(timestep)./4.7,'makima');
+    R2=interpn(ECNParams.Dims.soc, ECNParams.Dims.temp, ECNParams.Dims.crate,ECNParams.Components.R_2,socData(timestep),tempData(timestep),curr_Data(timestep)./4.7,'makima');
+    C1=interpn(ECNParams.Dims.soc, ECNParams.Dims.temp, ECNParams.Dims.crate,ECNParams.Components.C_1,socData(timestep),tempData(timestep),curr_Data(timestep)./4.7,'makima');
+    C2=interpn(ECNParams.Dims.soc, ECNParams.Dims.temp, ECNParams.Dims.crate,ECNParams.Components.C_2,socData(timestep),tempData(timestep),curr_Data(timestep)./4.7,'makima');
+%     
     IR0=R0.*curr_Data(timestep); 
     Vrc1=R1*(exp(-dt/R1/C1).*(Vrc1/R1)+(1-exp(-dt/R1/C1)).*curr_Data(timestep));
     Vrc2=R2*(exp(-dt/R2/C2).*(Vrc2/R2)+(1-exp(-dt/R2/C2)).*curr_Data(timestep));

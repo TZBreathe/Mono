@@ -8,7 +8,9 @@ N=1; % controls timestep
 dt=1;
 Tref=298;
 % Crate=[0.1; 0.5; 1; 2; 3; 4; 5].*4.75; %CC charge
-Crate=[12.5; 15; 20]; % Lincc
+% Crate=[12.5; 15; 20]; % Lincc 25
+Crate=[12.5; 20]; % Lincc 35
+% Crate=[12.5; 26]; % Lincc 45
 
 SoC0=socData(1);
 voltOut=ones(length(timeData),1);
@@ -34,9 +36,9 @@ k_hyst=10;
 times=N*length(timeData);
 curr_Data=currData;
 
-    tau_0=interp1(Crate,k(1,:),max(curr_Data),'linear',k(1,3));
-    kd=interp1(Crate,k(2,:),max(curr_Data),'linear',k(2,3));
-    Ea=interp1(Crate,k(3,:),max(curr_Data),'linear',k(3,3));
+    tau_0=interp1(Crate,k(1,:),max(curr_Data),'linear',k(1,2));
+    kd=interp1(Crate,k(2,:),max(curr_Data),'linear',k(2,2));
+    Ea=interp1(Crate,k(3,:),max(curr_Data),'linear',k(3,2));
 % for ii=2:length(currData)
 %   curr_Data(N*ii+1:N*ii+10)=currData(ii);
 % end
